@@ -9,5 +9,15 @@ from sklearn.metrics import accuracy_score, r2_score
 import matplotlib
 import matplotlib.pyplot as plt
 
-print(np.arange(1, 100))
+
+class exploreData():
+    def __init__(self):
+        self.data = pd.DataFrame()
+    
+    def readData(self, data):
+        return
+
+if __name__ == "__main__":
+    x = exploreData()
+    print(x)
 
