@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score, r2_score
 import matplotlib
 import matplotlib.pyplot as plt
 
-class LinRegression
+class LinRegression():
     def __init__(self):
         self.data = []
         self.model = LinearRegression()
