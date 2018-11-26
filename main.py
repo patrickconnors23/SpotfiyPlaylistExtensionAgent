@@ -10,6 +10,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import accuracy_score, r2_score
 import matplotlib
 import matplotlib.pyplot as plt
+from models import linearRegression
 
 PATH = "data/data/mpd.slice.96000-96999.json"
 
