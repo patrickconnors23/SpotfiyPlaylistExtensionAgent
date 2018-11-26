@@ -11,17 +11,24 @@ from sklearn.metrics import accuracy_score, r2_score
 import matplotlib
 import matplotlib.pyplot as plt
 
-PATH = "../data/data/mpd.slice.96000-96999.json"
+PATH = "data/data/mpd.slice.96000-96999.json"
 
 class exploreData():
     def __init__(self, path):
         self.data = self.readData(path)
+        self.displayData()
     
     def readData(self, path):
         with open(path) as f:
             data = json.load(f)
             playlists = data["playlists"]
+            pp.pprint(playlists[0])
         return pd.DataFrame(playlists)
+    
+    def displayData(self):
+        data = self.data
+        print(data.shape)
+        pp.pprint(data.columns)
 
 if __name__ == "__main__":
     x = exploreData(PATH)
