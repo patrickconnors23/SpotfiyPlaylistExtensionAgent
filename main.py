@@ -11,6 +11,7 @@ from sklearn.metrics import accuracy_score, r2_score
 import matplotlib
 import matplotlib.pyplot as plt
 from models import linearRegression
+from util import vis
 
 PATH = "data/data/mpd.slice.96000-96999.json"
 
@@ -28,8 +29,10 @@ class exploreData():
     
     def displayData(self):
         data = self.data
-        print(data.shape)
-        pp.pprint(data.columns)
+        for _, playlist in data.iterrows():
+            pp.pprint(playlist.tracks[0]["track_name"])
+        vis.displayPopularArtists(None, None)
+
 
 if __name__ == "__main__":
     x = exploreData(PATH)
