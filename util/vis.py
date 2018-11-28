@@ -12,6 +12,7 @@ Displays bar chart of most common keywords
 used in playlist names
 """
 def displayMostCommonKeyWord():
+    count = 0
     pass
 
 """
