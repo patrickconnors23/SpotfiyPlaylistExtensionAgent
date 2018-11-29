@@ -8,8 +8,6 @@ from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import accuracy_score, r2_score
-import matplotlib
-import matplotlib.pyplot as plt
 from models import linearRegression
 from util import vis
 
@@ -24,15 +22,12 @@ class exploreData():
         with open(path) as f:
             data = json.load(f)
             playlists = data["playlists"]
-            pp.pprint(playlists[0])
         return pd.DataFrame(playlists)
     
     def displayData(self):
         data = self.data
-        for _, playlist in data.iterrows():
-            pp.pprint(playlist.tracks[0]["track_name"])
-        vis.displayPopularArtists(None, None)
-
+        vis.displayPopularArtists()
+        vis.displayPlaylistLengthDistribution(data)
 
 if __name__ == "__main__":
     x = exploreData(PATH)
