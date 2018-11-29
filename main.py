@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from models import linearRegression
 from util import vis
 
-PATH = "data/data/mpd.slice.96000-96999.json"
+PATH = "data/data/mpd.slice.0-999.json"
 
 class exploreData():
     def __init__(self, path):
