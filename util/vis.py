@@ -48,13 +48,12 @@ def displayPopularArtists(df, lim=100):
     plt.ylabel("Number of Appearences")
     plt.title("Number of Playlist Appearences by Top 100 Artists")
     plt.savefig("figs/popularArtists.png")
-    return
 
-"""
-Displays bar chart of most common keywords
-used in playlist names
-"""
 def displayMostCommonKeyWord(df):
+    """
+    Displays bar chart of most common keywords
+    used in playlist names
+    """
     playlist_names = df["name"]
     dic = {}
     
@@ -79,7 +78,6 @@ def displayMostCommonKeyWord(df):
     plt.ylabel("Frequency")
     plt.title("Most Common Words in Playlist Titles")
     plt.savefig("figs/kwF.png")
-    pass
 
 def displayPlaylistLengthDistribution(df):
     """
@@ -96,4 +94,3 @@ def displayPlaylistLengthDistribution(df):
         ylabel="Distribution",
         data=numTracks)
     plt.savefig("figs/playlistLengthDist.png")
-    return
