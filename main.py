@@ -26,10 +26,9 @@ class exploreData():
     
     def displayData(self):
         data = self.data
-        vis.displayPopularArtists()
         vis.displayPlaylistLengthDistribution(data)
+        vis.displayPopularArtists(data)
 
 if __name__ == "__main__":
     x = exploreData(PATH)
-    print(x)
 
