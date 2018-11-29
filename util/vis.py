@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 do we need to know this?
 """
 def displayPopularArtists():
-    print "sadfasdfas"
     pass
 
 """
@@ -23,6 +22,4 @@ allows us to get a sense of the size of
 a typical playlist 
 """
 def displayPlaylistLengthDistribution():
-
-#Will's commit comment
     pass
