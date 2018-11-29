@@ -28,6 +28,7 @@ class exploreData():
         data = self.data
         vis.displayPlaylistLengthDistribution(data)
         vis.displayPopularArtists(data)
+        vis.displayMostCommonKeyWord(data)
 
 if __name__ == "__main__":
     x = exploreData(PATH)
