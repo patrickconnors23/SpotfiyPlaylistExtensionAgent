@@ -9,5 +9,8 @@ import matplotlib.pyplot as plt
 
 class LinRegression():
     def __init__(self):
-        self.data = []
         self.model = LinearRegression()
+        self.path = None
+    
+    def predict(self, X):
+        pass

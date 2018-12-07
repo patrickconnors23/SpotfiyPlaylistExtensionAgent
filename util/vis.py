@@ -13,6 +13,22 @@ def plotHist(ax, title, xlabel, ylabel, data):
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
 
+def plotBar(ax, title, xlabel, ylabel, spacing, heights, labels):
+    """
+    Helper used to plot bar chart
+    """
+    # Plot data
+    ax.bar(spacing, heights)
+    plt.xticks(
+            ticks=spacing,
+            labels=labels,
+            rotation="vertical",
+            fontsize=5
+    )
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+
 def displayPopularArtists(df, lim=100):
     """
     Display the number of playlist inclusions for
@@ -35,18 +51,15 @@ def displayPopularArtists(df, lim=100):
     mostPopular = sortedArtists[:lim]
     artists, count = zip(*mostPopular)
     xvals = np.arange(len(mostPopular))
+
     # Plot data
     fig, ax = plt.subplots(1, 1, figsize=(12, 5))
-    plt.bar(xvals, count)
-    plt.xticks(
-            ticks=xvals,
-            labels=artists,
-            rotation="vertical",
-            fontsize=5
-    )
-    plt.xlabel("Artist")
-    plt.ylabel("Number of Appearences")
-    plt.title("Number of Playlist Appearences by Top 100 Artists")
+    plotBar(ax, "Number of Playlist Appearences by Top 100 Artists",
+        xlabel="Artist",
+        ylabel="Number of Appearences",
+        spacing=xvals,
+        heights=count,
+        labels=artists)
     plt.savefig("figs/popularArtists.png")
 
 def displayMostCommonKeyWord(df):
@@ -63,20 +76,22 @@ def displayMostCommonKeyWord(df):
 
     # Sort dict and break up into consumable form
     key_dict = dict((x,flat_list.count(x)) for x in set(flat_list))
-    key_dict = sorted(key_dict.items(),key=lambda x:x[1], reverse=True)
+    key_dict = sorted(key_dict.items(),
+                        key=lambda x:x[1], 
+                        reverse=True)
+
     word, count = zip(*key_dict[:20])
 
     xvals = np.arange(len(word))
     fig, ax = plt.subplots(1, 1, figsize=(12, 5))
     plt.bar(xvals, count)
-    plt.xticks(
-            ticks=xvals,
-            labels=word,
-            rotation="vertical",
-            fontsize=7)
-    plt.xlabel("KeyWord")
-    plt.ylabel("Frequency")
-    plt.title("Most Common Words in Playlist Titles")
+    plotBar(ax=ax,
+        title="Most Common Words in Playlist Titles",
+        xlabel="KeyWord",
+        ylabel="Frequency",
+        spacing=xvals,
+        heights=count,
+        labels=word)
     plt.savefig("figs/kwF.png")
 
 def displayPlaylistLengthDistribution(df):
