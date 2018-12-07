@@ -11,17 +11,16 @@ from sklearn.linear_model import LogisticRegressionCV
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import accuracy_score, r2_score
 
-from models import linearRegression
+from models import linearRegression, KMeansCluster
 from util import vis, dataIn
-
-PATH = "data/data/mpd.slice.0-999.json"
 
 class exploreData():
     def __init__(self, idx, numFiles, parseFiles):
         self.readData(idx=idx,
             numFiles=numFiles,
             shouldProcess=parseFiles)
-        # self.displayData()
+        self.KMC = KMeansCluster.KMeansCluster(self.playlists)
+        print(self.KMC.predict([[4,5,5]]))
     
     def readData(self, idx, numFiles, shouldProcess):
         # don't have to write every time
