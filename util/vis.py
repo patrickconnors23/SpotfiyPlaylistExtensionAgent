@@ -79,7 +79,7 @@ def displayMostCommonKeyWord(df):
     key_dict = sorted(key_dict.items(),
                         key=lambda x:x[1], 
                         reverse=True)
-                        
+
     word, count = zip(*key_dict[:20])
 
     xvals = np.arange(len(word))
