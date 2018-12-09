@@ -32,15 +32,16 @@ class exploreData():
             files = os.listdir("data/data")
             files.sort(key=sortFile)
 
-            dataIn.createCSVs(idx=idx, 
+            dataIn.createDFs(idx=idx, 
                 numFiles=numFiles,
                 path="data/data/",
                 files=files)
 
         # Read data
         print("Reading data")
-        self.playlists = pd.read_csv("data/CSV/playlists.csv")
-        self.songs = pd.read_csv("data/CSV/tracks.csv")
+        self.playlists = pd.read_pickle("lib/playlists.pkl")
+        self.songs = pd.read_pickle("lib/tracks.pkl")
+        self.playlistSparse = pd.read_pickle("lib/playlistSparse.pkl")
         print(f"Working with {len(self.playlists)} playlists " + \
             f"and {len(self.songs)} songs")
     

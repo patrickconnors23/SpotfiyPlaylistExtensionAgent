@@ -1,9 +1,46 @@
-import json, display
+import json, display, pickle
 import pandas as pd
+import numpy as np
+from tqdm import tqdm
+from scipy.sparse import dok_matrix
 
-def createCSVs(idx, numFiles, path, files):
+def parseTrackURI(uri):
+    return uri.split(":")[2]
+
+def processPlaylistForClustering(playlists, tracks):
     """
-    Creates playlist and track csvs from
+    Create sparse matrix mapping playlists to track
+    lists that are consumable by most clustering algos
+    """
+
+    # List of all track IDs in db
+    trackIDs = list(tracks["tid"])
+    
+    # Map track id to matrix index
+    IDtoIDX = {k:v for k,v in zip(trackIDs,range(0,len(trackIDs)))}
+    
+    playlistIDs = list(playlists["pid"])
+    
+    print("Create sparese matrix mapping playlists to tracks")
+    playlistSongSparse = dok_matrix((len(playlistIDs), len(trackIDs)), dtype=np.float32)
+
+    for i in tqdm(range(len(playlistIDs))):
+        # Get playlist and track ids from DF
+        playlistID = playlistIDs[i]
+        trackID = playlists.loc[playlistID]["tracks"]
+        playlistIDX = playlistID
+        
+        # Get matrix index for track id
+        trackIDX = [IDtoIDX.get(i) for i in trackID]
+        
+        # Set index to 1 if playlist has song
+        playlistSongSparse[playlistIDX, trackIDX] = 1 
+
+    return playlistSongSparse
+
+def createDFs(idx, numFiles, path, files):
+    """
+    Creates playlist and track DataFrames from
     json files
     """
     # Get correct number of files to work with
@@ -13,8 +50,8 @@ def createCSVs(idx, numFiles, path, files):
     playlistsLst = []
     trackLst = []
 
-    for i, FILE in enumerate(files):
-        if i % 10 == 0: print(i)
+    print("Creating track and playlist DFs")
+    for i, FILE in enumerate(tqdm(files)):
         # get full path to file
         name = path + FILE 
         with open(name) as f:
@@ -27,14 +64,26 @@ def createCSVs(idx, numFiles, path, files):
                     if track["track_uri"] not in tracksSeen:
                         tracksSeen.add(track["track_uri"])
                         trackLst.append(track)
-                playlist["tracks"] = [x["track_uri"] for x in playlist["tracks"]]
+                playlist["tracks"] = [parseTrackURI(x["track_uri"]) for x in playlist["tracks"]]
                 playlistsLst.append(playlist)
     
     playlistDF = pd.DataFrame(playlistsLst)
+
+    playlistDF.set_index("pid")
+
     tracksDF = pd.DataFrame(trackLst)
+    # Split id from spotifyURI for brevity
+    tracksDF["tid"] = tracksDF.apply(lambda row: parseTrackURI(row["track_uri"]), axis=1)
+    tracksDF.set_index("tid")
+
+    playlistClusteredDF = processPlaylistForClustering(playlists=playlistDF,
+                                                       tracks=tracksDF)
 
     # Write DFs to CSVs
-    print(f"Writing {len(playlistDF)} playlists to CSV")
-    playlistDF.to_csv("data/CSV/playlists.csv")
-    print(f"Writing {len(tracksDF)} tracks to CSV")
-    tracksDF.to_csv("data/CSV/tracks.csv")
+    print(f"Pickling {len(playlistDF)} playlists")
+    playlistDF.to_pickle("lib/playlists.pkl")
+    print(f"Pickling {len(tracksDF)} tracks")
+    tracksDF.to_pickle("lib/tracks.pkl")
+    print(f"Pickling clustered playlist")
+    pickle.dump(playlistClusteredDF, open(f"lib/playlistSparse.pkl", "wb"))
+    
