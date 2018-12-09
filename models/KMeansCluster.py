@@ -35,7 +35,7 @@ class KMeansCluster():
             [1,2,70],
         ]
         print(f"Training KMeans clusterer")
-        self.model.fit(dummy)
+        self.model.fit(data)
         self.saveModel()
     
     def predict(self, X):

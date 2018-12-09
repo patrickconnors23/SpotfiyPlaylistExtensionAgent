@@ -12,6 +12,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import accuracy_score, r2_score
 
 from models import linearRegression, KMeansCluster
+from models.NNeighClassifier import NNeighClassifier
 from util import vis, dataIn
 
 class exploreData():
@@ -19,8 +20,9 @@ class exploreData():
         self.readData(idx=idx,
             numFiles=numFiles,
             shouldProcess=parseFiles)
-        self.KMC = KMeansCluster.KMeansCluster(self.playlists)
-        print(self.KMC.predict([[4,5,5]]))
+        # self.KMC = KMeansCluster.KMeansCluster(self.playlistSparse)
+        self.NNC = NNeighClassifier(self.playlistSparse,
+            reTrain=True)
     
     def readData(self, idx, numFiles, shouldProcess):
         # don't have to write every time
@@ -44,7 +46,7 @@ class exploreData():
         self.playlistSparse = pd.read_pickle("lib/playlistSparse.pkl")
         print(f"Working with {len(self.playlists)} playlists " + \
             f"and {len(self.songs)} songs")
-    
+        
     #TODO change this later
     def displayData(self):
         data = self.data

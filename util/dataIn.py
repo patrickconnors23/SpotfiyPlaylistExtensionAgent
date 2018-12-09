@@ -36,7 +36,7 @@ def processPlaylistForClustering(playlists, tracks):
         # Set index to 1 if playlist has song
         playlistSongSparse[playlistIDX, trackIDX] = 1 
 
-    return playlistSongSparse
+    return playlistSongSparse.tocsr()
 
 def createDFs(idx, numFiles, path, files):
     """
