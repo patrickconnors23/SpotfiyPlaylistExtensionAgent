@@ -11,19 +11,22 @@ from sklearn.linear_model import LogisticRegressionCV
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import accuracy_score, r2_score
 
-from models import linearRegression, KMeansCluster
 from models.NNeighClassifier import NNeighClassifier
 from util import vis, dataIn
+from util.helpers import playlistToSparseMatrixEntry
 
 class exploreData():
     def __init__(self, idx, numFiles, parseFiles):
         self.readData(idx=idx,
             numFiles=numFiles,
             shouldProcess=parseFiles)
-        # self.KMC = KMeansCluster.KMeansCluster(self.playlistSparse)
-        self.NNC = NNeighClassifier(self.playlistSparse,
+        self.NNC = NNeighClassifier(
+            sparsePlaylists=self.playlistSparse,
+            songs=self.songs,
+            playlists=self.playlists,
             reTrain=True)
-    
+        self.predictRandomNeighbour(self.playlists.iloc[10])
+
     def readData(self, idx, numFiles, shouldProcess):
         # don't have to write every time
         if shouldProcess:
@@ -46,6 +49,9 @@ class exploreData():
         self.playlistSparse = pd.read_pickle("lib/playlistSparse.pkl")
         print(f"Working with {len(self.playlists)} playlists " + \
             f"and {len(self.songs)} songs")
+    
+    def predictRandomNeighbour(self, playlist):
+        self.NNC.predict(playlist)
         
     #TODO change this later
     def displayData(self):
