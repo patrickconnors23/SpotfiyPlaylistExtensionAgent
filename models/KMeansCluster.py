@@ -8,7 +8,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 class KMeansCluster():
-    def __init__(self, playlists, reTrain=False, name="KMeansCluster.py"):
+    def __init__(self, playlists, reTrain=False, name="KMeansCluster.pkl"):
         self.pathName = name
         self.playlistData = playlists
         self.initModel(reTrain)
@@ -37,7 +37,7 @@ class KMeansCluster():
         print(f"Training KMeans clusterer")
         self.model.fit(dummy)
         self.saveModel()
-
+    
     def predict(self, X):
         return self.model.predict(X)
     
