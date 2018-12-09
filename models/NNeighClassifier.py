@@ -8,10 +8,14 @@ from sklearn.metrics import accuracy_score, r2_score
 import matplotlib
 import matplotlib.pyplot as plt
 
+from util.helpers import playlistToSparseMatrixEntry, getPlaylistTracks
+
 class NNeighClassifier():
-    def __init__(self, playlists, reTrain=False, name="NNClassifier.pkl"):
+    def __init__(self, playlists, sparsePlaylists, songs, reTrain=False, name="NNClassifier.pkl"):
         self.pathName = name
-        self.playlistData = playlists
+        self.playlistData = sparsePlaylists
+        self.playlists = playlists 
+        self.songs = songs
         self.initModel(reTrain)
     
     def initModel(self, reTrain):
@@ -29,14 +33,23 @@ class NNeighClassifier():
         self.model.fit(data)
         self.saveModel()
     
+    def getNeighbors(self, X):
+        return self.model.kneighbors(X=X, return_distance=False)[0]
+    
+    def getPlaylistsFromNeighbors(self, playlists):
+        return [self.playlists.loc[x] for x in playlists]
+    
+    def getPredictionsFromTracks(self, tracks):
+        #TODO Choose how to implement this
+        return []
+    
     def predict(self, X):
         predictions = []
-        neighbors = kneighbors(X=X,
-            return_distance=False)         
-        # TODO list of indices of playlist locations in sparse matrix, should be same as indices in reg matrix
-        # Step 1 -> convert playlist indicies to playlist and get track ids
-        # Step 2 -> get most common track IDs that aren't in current playlist (X)
-        # Step 3 (Maybe)-> Convert trackIDs of relevant tracks to song names
+        sparseX = playlistToSparseMatrixEntry(X, self.songs)
+        neighbors = self.getNeighbors(sparseX) # PlaylistIDs
+        playlists = self.getPlaylistsFromNeighbors(neighbors)
+        tracks = [getPlaylistTracks(x, self.songs) for x in playlists]
+        predictions = getPredictionsFromTracks(tracks)
         return predictions
     
     def saveModel(self):
