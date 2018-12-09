@@ -36,7 +36,7 @@ def processPlaylistForClustering(playlists, tracks):
         # Set index to 1 if playlist has song
         playlistSongSparse[playlistIDX, trackIDX] = 1 
 
-    return playlistSongSparse.tocsr()
+    return playlistSongSparse.tocsr(), IDtoIDX
 
 def createDFs(idx, numFiles, path, files):
     """
@@ -74,11 +74,14 @@ def createDFs(idx, numFiles, path, files):
     tracksDF = pd.DataFrame(trackLst)
     # Split id from spotifyURI for brevity
     tracksDF["tid"] = tracksDF.apply(lambda row: parseTrackURI(row["track_uri"]), axis=1)
-    tracksDF.set_index("tid")
 
-    playlistClusteredDF = processPlaylistForClustering(playlists=playlistDF,
+    playlistClusteredDF, IDtoIDXMap = processPlaylistForClustering(playlists=playlistDF,
                                                        tracks=tracksDF)
 
+    # Add sparseID for easy coercision to sparse matrix for training data
+    tracksDF["sparse_id"] = tracksDF.apply(lambda row: IDtoIDXMap[row["tid"]], axis=1)
+    tracksDF = tracksDF.set_index("tid")
+    
     # Write DFs to CSVs
     print(f"Pickling {len(playlistDF)} playlists")
     playlistDF.to_pickle("lib/playlists.pkl")
