@@ -14,6 +14,7 @@ from sklearn.metrics import accuracy_score, r2_score
 from models.NNeighClassifier import NNeighClassifier
 from util import vis, dataIn
 from util.helpers import playlistToSparseMatrixEntry
+from test.test import TestTracks
 
 class exploreData():
     def __init__(self, idx, numFiles, parseFiles):

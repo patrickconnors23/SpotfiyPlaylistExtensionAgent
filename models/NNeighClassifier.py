@@ -40,8 +40,14 @@ class NNeighClassifier():
         return [self.playlists.loc[x] for x in playlists]
     
     def getPredictionsFromTracks(self, tracks):
-        #TODO Choose how to implement this
-        return []
+        songs = defaultdict(int)
+        for i, playlist in enumerate(tracks): 
+            for song in playlist:
+                track_name = song['track_name']
+                songs[track_name] += (1/(i+1))
+        scores = heapq.nlargest(7, songs, key=songs.get) 
+        return scores
+
     
     def predict(self, X):
         predictions = []
