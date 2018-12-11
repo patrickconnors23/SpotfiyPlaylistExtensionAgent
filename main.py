@@ -118,19 +118,18 @@ class SpotifyExplorer:
         tracks = [i for i in playlist['tracks'] + obscured if i not in playlist['tracks'] or i not in obscured]
         return tracks, obscured
 
-    def test(self, iterations, percent=50): 
+    def evalAccuracy(self, numPlaylists, percentToObscure=50): 
         """
         Obscures a percentage of songs
         Iterates and sees how many reccomendations match the missing songs
         """
         print()
-        print(f"Selecting {iterations} playlists to test and obscuring {percent}% of songs")
+        print(f"Selecting {numPlaylists} playlists to test and obscuring {percentToObscure}% of songs")
 
-        accuracies = []
-        for _ in tqdm(range(iterations)):
+        def getAcc():
             playlist = self.getRandomPlaylist()
 
-            keptTracks, obscured = self.obscurePlaylist(playlist, percent)
+            keptTracks, obscured = self.obscurePlaylist(playlist, percentToObscure)
             playlistSub = playlist.copy()
             playlistSub['tracks'] = keptTracks
 
@@ -142,10 +141,12 @@ class SpotifyExplorer:
             
             overlap = [value for value in predictions if value in obscuredTracks]
 
-            accuracy = len(overlap)/len(obscuredTracks)
-            accuracies.append(accuracy)
+            return len(overlap)/len(obscuredTracks)
+        
+        accuracies = [getAcc() for _ in tqdm(range(numPlaylists))]
+        avgAcc = round(sum(accuracies) / len(accuracies), 4) * 100
 
-        print(f"Using {self.classifier.name}, we predictd {round(sum(accuracies)/len(accuracies), 4) * 100}% of obscured songs")
+        print(f"Using {self.classifier.name}, we predicted {avgAcc}% of obscured songs")
 
 if __name__ == "__main__":
     # Parse command line arguments
@@ -167,8 +168,8 @@ if __name__ == "__main__":
     spotify_explorer = SpotifyExplorer(numToParse)
 
     #Run tests on NNC
-    spotify_explorer.test(30)
+    spotify_explorer.evalAccuracy(30)
     
     # Run tests on base
     spotify_explorer.setClassifier("Base")
-    spotify_explorer.test(30)
+    spotify_explorer.evalAccuracy(30)
