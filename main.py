@@ -102,12 +102,12 @@ class SpotifyExplorer:
     Obscures a percentage of songs
     Iterates and sees how many reccomendations match the missing songs
     """
-    def test(self, iterations, percent=50): 
+    def test(self, iterations, percent=70): 
         print("Selecting", iterations, "Playlists...")
         print("Obscuring", percent, "% of values ")
 
         accuracies = []
-        for i in tqdm(range(iterations)):
+        for _ in tqdm(range(iterations)):
             playlist = self.getRandomPlaylist()
 
             keptTracks, obscured = self.obscurePlaylist(playlist, percent)
@@ -116,10 +116,10 @@ class SpotifyExplorer:
 
             predictions = self.predictNeighbour(playlistSub, len(obscured), self.songs)
             #print(predictions)
-
+            #print(len(predictions))
             obscuredTracks = [self.songs.loc[x]['track_name'] for x in obscured]
             #print(obscuredTracks)
-            
+            #print(len(obscuredTracks))
             overlap = [value for value in predictions if value in obscuredTracks]
 
             #print(len(overlap))
