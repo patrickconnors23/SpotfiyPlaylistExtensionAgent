@@ -127,7 +127,7 @@ class SpotifyExplorer:
             accuracy = len(overlap)/len(obscuredTracks)
             accuracies.append(accuracy)
             #print("Given a random playlist with ", len(playlist['tracks']), " songs, this test showed an accuracy of ", accuracy)
-        print(sum(accuracies)/len(accuracies))
+        print("Using model",self.currentClassifier, ", we have an accuracy that averages", sum(accuracies)/len(accuracies), "across", iterations, "iterations")
 
 
 
@@ -160,11 +160,16 @@ if __name__ == "__main__":
     parse:    Boolean to load in data
     """
 
-    spotify_explorer = SpotifyExplorer(idx, numFiles, parse)
+    spotify_explorer = SpotifyExplorer(idx, numFiles, parse, classifier="Base")
 
     #Create our classifiers
     spotify_explorer.buildNNC()
     spotify_explorer.buildBaseClassifier()
 
-    #Run tests
-    spotify_explorer.test(150)
+    #Run tests on Base
+    spotify_explorer.test(15)
+
+    spotify_explorer.switchClassifier(classifier="NNC")
+
+    #Run teset on our model
+    spotify_explorer.test(15)
