@@ -21,17 +21,37 @@ class SpotifyExplorer:
         self.readData(idx=idx,
             numFiles=numFiles,
             shouldProcess=parseFiles)
-        if classifier == "NNC":
-            self.NNC = NNeighClassifier(
-                sparsePlaylists=self.playlistSparse,
-                songs=self.songs,
-                playlists=self.playlists,
-                reTrain=True)
+
+        if classifier == "NNC": 
+            self.currentClassifier = "NNC"
+            self.classifier = self.buildNNC()
         else: 
-            self.baseClassifier = BaseClassifier(
-                songs=self.songs,
-                playlists=self.playlists)  
-        self.predictRandomNeighbour(self.playlists.iloc[10])
+            self.currentClassifier = "Base"
+            self.classifier = self.buildBaseClassifier()
+
+    def buildNNC(self): 
+        self.NNC = NNeighClassifier(
+            sparsePlaylists=self.playlistSparse,
+            songs=self.songs,
+            playlists=self.playlists,
+            reTrain=True) 
+        return self.NNC
+
+    def buildBaseClassifier(self):
+        self.baseClassifier = BaseClassifier(
+            songs=self.songs,
+            playlists=self.playlists)  
+        return self.baseClassifier
+
+    def switchClassifier(self, classifier=None): 
+        if classifier == None: 
+            classifier = "NNC" if classifier == "Base" else "Base"
+        if classifier == "Base": 
+            self.currentClassifier = "Base"
+            self.classifier = self.baseClassifier
+        else: 
+            self.currentClassifier = "NNC"
+            self.classifier = self.NNC
 
     def readData(self, idx, numFiles, shouldProcess):
         # don't have to write every time
@@ -57,14 +77,22 @@ class SpotifyExplorer:
             f"and {len(self.songs)} songs")
     
     def predictRandomNeighbour(self, playlist):
-        self.NNC.predict(playlist)
+        return self.classifier.predict(playlist)
         
     #TODO change this later
     def displayData(self):
-        data = self.data
-        vis.displayPlaylistLengthDistribution(data)
-        vis.displayPopularArtists(data)
-        vis.displayMostCommonKeyWord(data)
+        pass
+        #data = self.data
+        #vis.displayPlaylistLengthDistribution(data)
+        #vis.displayPopularArtists(data)
+        #vis.displayMostCommonKeyWord(data)
+
+    def test(self): 
+        print(self.predictRandomNeighbour(self.playlists.iloc[8]))
+
+
+
+
 
 if __name__ == "__main__":
     # Parse command line arguments
@@ -85,4 +113,20 @@ if __name__ == "__main__":
         parse = True
     else:
         parse = False
-    x = SpotifyExplorer(idx, numFiles, parse)
+
+    """
+    Builds explorer
+
+    idx:      ????
+    numFiles: Number of files to load (each with 1000 playlists)
+    parse:    Boolean to load in data
+    """
+    
+    spotify_explorer = SpotifyExplorer(idx, numFiles, parse)
+
+    #Create our classifiers
+    spotify_explorer.buildNNC()
+    spotify_explorer.buildBaseClassifier()
+
+    #Run tests
+    spotify_explorer.test()
