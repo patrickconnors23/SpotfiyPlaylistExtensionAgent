@@ -29,5 +29,5 @@ class BaseClassifier:
         
     def predict(self, X, numPredictions, songs):
         scores = heapq.nlargest(numPredictions, self.popularity, key=self.popularity.get) 
-        scores = [songs.loc[x]['track_name'] for x in scores]
+        # scores = [songs.loc[x]['track_name'] for x in scores]
         return scores

@@ -14,7 +14,7 @@ from sklearn.metrics import accuracy_score, r2_score
 from models.NNeighClassifier import NNeighClassifier
 from models.BaseClassifier import BaseClassifier
 from util import vis, dataIn
-from util.helpers import playlistToSparseMatrixEntry, getPlaylistTracks
+from util.helpers import playlistToSparseMatrixEntry, getPlaylistTracks, getTrackandArtist
 #from test.test import TestTracks
 
 class SpotifyExplorer:
@@ -29,7 +29,6 @@ class SpotifyExplorer:
         playlists (DataFrame): contains all playlists read into memory
         songs (DataFrame): all songs read into memory
         playlistSparse (scipy.CSR matrix) playlists formatted for predictions
-
     """
     def __init__(self, numFiles, retrainNNC=True):
         self.readData(numFiles)
@@ -118,19 +117,18 @@ class SpotifyExplorer:
         tracks = [i for i in playlist['tracks'] + obscured if i not in playlist['tracks'] or i not in obscured]
         return tracks, obscured
 
-    def test(self, iterations, percent=50): 
+    def evalAccuracy(self, numPlaylists, percentToObscure=50): 
         """
         Obscures a percentage of songs
         Iterates and sees how many reccomendations match the missing songs
         """
         print()
-        print(f"Selecting {iterations} playlists to test and obscuring {percent}% of songs")
+        print(f"Selecting {numPlaylists} playlists to test and obscuring {percentToObscure}% of songs")
 
-        accuracies = []
-        for _ in tqdm(range(iterations)):
+        def getAcc():
             playlist = self.getRandomPlaylist()
 
-            keptTracks, obscured = self.obscurePlaylist(playlist, percent)
+            keptTracks, obscured = self.obscurePlaylist(playlist, percentToObscure)
             playlistSub = playlist.copy()
             playlistSub['tracks'] = keptTracks
 
@@ -138,14 +136,27 @@ class SpotifyExplorer:
                 len(obscured), 
                 self.songs)
 
-            obscuredTracks = [self.songs.loc[x]['track_name'] for x in obscured]
+            # obscuredTracks = [self.songs.loc[x]['track_name'] for x in obscured]
             
-            overlap = [value for value in predictions if value in obscuredTracks]
+            overlap = [value for value in predictions if value in obscured]
 
-            accuracy = len(overlap)/len(obscuredTracks)
-            accuracies.append(accuracy)
+            return len(overlap)/len(obscured)
+        
+        accuracies = [getAcc() for _ in tqdm(range(numPlaylists))]
+        avgAcc = round(sum(accuracies) / len(accuracies), 4) * 100
 
-        print(f"Using {self.classifier.name}, we predictd {round(sum(accuracies)/len(accuracies), 4) * 100}% of obscured songs")
+        print(f"Using {self.classifier.name}, we predicted {avgAcc}% of obscured songs")
+    
+    def displayRandomPrediction(self):
+        playlist = self.getRandomPlaylist()
+        predictions = self.predictNeighbour(playlist=playlist,
+            numPredictions=5,
+            songs=self.songs)
+        playlistName = playlist["name"]
+        playlist = [getTrackandArtist(trackURI, self.songs) for trackURI in playlist["tracks"]]
+        predictions = [getTrackandArtist(trackURI, self.songs) for trackURI in predictions]
+        pp.pprint(playlist)
+        pp.pprint(predictions)
 
 if __name__ == "__main__":
     # Parse command line arguments
@@ -167,8 +178,9 @@ if __name__ == "__main__":
     spotify_explorer = SpotifyExplorer(numToParse)
 
     #Run tests on NNC
-    spotify_explorer.test(30)
+    # spotify_explorer.evalAccuracy(30)
     
     # Run tests on base
-    spotify_explorer.setClassifier("Base")
-    spotify_explorer.test(30)
+    # spotify_explorer.setClassifier("Base")
+    # spotify_explorer.evalAccuracy(30)
+    spotify_explorer.displayRandomPrediction()
