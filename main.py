@@ -142,6 +142,11 @@ class SpotifyExplorer:
 
             return len(overlap)/len(obscured)
         
+        playlistsToTest = [self.getRandomPlaylist() for _ in range(numPlaylists)]
+        pids = [x["pid"] for x in playlistsToTest]
+        self.playlists = self.playlists.drop(pids)
+        self.buildClassifiers(retrainNNC=True)
+        
         accuracies = [getAcc() for _ in tqdm(range(numPlaylists))]
         avgAcc = round(sum(accuracies) / len(accuracies), 4) * 100
 
@@ -149,14 +154,28 @@ class SpotifyExplorer:
     
     def displayRandomPrediction(self):
         playlist = self.getRandomPlaylist()
+        while len(playlist["tracks"]) < 10:
+            playlist = self.getRandomPlaylist()
+
         predictions = self.predictNeighbour(playlist=playlist,
             numPredictions=5,
             songs=self.songs)
+
         playlistName = playlist["name"]
         playlist = [getTrackandArtist(trackURI, self.songs) for trackURI in playlist["tracks"]]
         predictions = [getTrackandArtist(trackURI, self.songs) for trackURI in predictions]
-        pp.pprint(playlist)
-        pp.pprint(predictions)
+        return {
+            "name": playlistName,
+            "playlist": playlist,
+            "predictions": predictions
+        }
+    
+    def createRandomPredictionsDF(self, numInstances):
+        print(f"Generating {numInstances} data points")
+        data = [self.displayRandomPrediction() for _ in tqdm(range(numInstances))]
+        df = pd.DataFrame(data)
+        df.to_csv("lukesData.csv")
+        
 
 if __name__ == "__main__":
     # Parse command line arguments
@@ -178,9 +197,9 @@ if __name__ == "__main__":
     spotify_explorer = SpotifyExplorer(numToParse)
 
     #Run tests on NNC
-    # spotify_explorer.evalAccuracy(30)
+    spotify_explorer.evalAccuracy(30)
     
-    # Run tests on base
+    # # Run tests on base
     # spotify_explorer.setClassifier("Base")
-    # spotify_explorer.evalAccuracy(30)
-    spotify_explorer.displayRandomPrediction()
+    spotify_explorer.evalAccuracy(30)
+    # spotify_explorer.createRandomPredictionsDF(100)

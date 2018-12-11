@@ -24,7 +24,7 @@ class NNeighClassifier():
         libContents = os.listdir("lib")
         if self.pathName not in libContents or reTrain:
             self.model = NearestNeighbors(
-                n_neighbors=5,
+                n_neighbors=6,
                 metric="cosine")
             self.trainModel(self.playlistData)
         else:
@@ -38,25 +38,30 @@ class NNeighClassifier():
     def getNeighbors(self, X):
         return self.model.kneighbors(X=X, return_distance=False)[0]
     
-    def getPlaylistsFromNeighbors(self, playlists):
+    def getPlaylistsFromNeighbors(self, neighbors, pid):
+        neighbors = list(filter(lambda x: x != pid, neighbors))
         return [self.playlists.loc[x] for x in playlists]
     
-    def getPredictionsFromTracks(self, tracks, numPredictions):
+    def getPredictionsFromTracks(self, tracks, numPredictions, playlistTracks):
+        playlistTracks = set(playlistTracks)
         songs = defaultdict(int)
         for i, playlist in enumerate(tracks): 
             for song in playlist:
                 track_uri = song['track_uri'].split(":")[2]
-                songs[track_uri] += (1/(i+1))
+                if track_uri not in playlistTracks:
+                    songs[track_uri] += (1/(i+1))
         scores = heapq.nlargest(numPredictions, songs, key=songs.get) 
         return scores
     
     def predict(self, X, numPredictions, songs):
-        predictions = []
+        pid, playlistTracks = X["pid"], X["tracks"]
         sparseX = playlistToSparseMatrixEntry(X, self.songs)
         neighbors = self.getNeighbors(sparseX) # PlaylistIDs
-        playlists = self.getPlaylistsFromNeighbors(neighbors)
+        playlists = self.getPlaylistsFromNeighbors(neighbors, pid)
         tracks = [getPlaylistTracks(x, self.songs) for x in playlists]
-        predictions = self.getPredictionsFromTracks(tracks, numPredictions)
+        predictions = self.getPredictionsFromTracks(tracks, 
+            numPredictions, 
+            playlistTracks)
         return predictions
     
     def saveModel(self):
