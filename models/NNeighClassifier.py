@@ -45,8 +45,8 @@ class NNeighClassifier():
         songs = defaultdict(int)
         for i, playlist in enumerate(tracks): 
             for song in playlist:
-                track_name = song['track_name']
-                songs[track_name] += (1/(i+1))
+                track_uri = song['track_uri'].split(":")[2]
+                songs[track_uri] += (1/(i+1))
         scores = heapq.nlargest(numPredictions, songs, key=songs.get) 
         return scores
     

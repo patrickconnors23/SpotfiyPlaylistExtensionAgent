@@ -13,3 +13,7 @@ def playlistToSparseMatrixEntry(playlist, songs):
 
 def getPlaylistTracks(playlist, songs):
     return [songs.loc[x] for x in playlist["tracks"]]
+
+def getTrackandArtist(trackURI, songs):
+    song = songs.loc[trackURI]
+    return (song["track_name"], song["artist_name"])
