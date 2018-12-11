@@ -3,6 +3,7 @@ import json, argparse, os, random
 import pprint as pp
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 from sklearn import metrics, datasets
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression, LinearRegression
@@ -13,7 +14,7 @@ from sklearn.metrics import accuracy_score, r2_score
 from models.NNeighClassifier import NNeighClassifier
 from models.BaseClassifier import BaseClassifier
 from util import vis, dataIn
-from util.helpers import playlistToSparseMatrixEntry
+from util.helpers import playlistToSparseMatrixEntry, getPlaylistTracks
 #from test.test import TestTracks
 
 class SpotifyExplorer:
@@ -79,8 +80,8 @@ class SpotifyExplorer:
     def getRandomPlaylist(self): 
         return self.playlists.iloc[random.randint(0,len(self.playlists) - 1)]
 
-    def predictNeighbour(self, playlist):
-        return self.classifier.predict(playlist)
+    def predictNeighbour(self, playlist, numPredictions):
+        return self.classifier.predict(playlist, numPredictions)
         
     #TODO change this later
     def displayData(self):
@@ -90,12 +91,43 @@ class SpotifyExplorer:
         #vis.displayPopularArtists(data)
         #vis.displayMostCommonKeyWord(data)
 
-    def test(self): 
-        playlist = self.getRandomPlaylist()
-        print("Selected playlist contains ", len(playlist), "songs")
-        print("Obscuring half of them for testing...")
-        self.predictNeighbour(playlist)
+    def obscurePlaylist(self, playlist, obscurity): 
+        k = len(playlist['tracks']) * obscurity // 100
+        indices = random.sample(range(len(playlist['tracks'])), k)
+        obscured = [playlist['tracks'][i] for i in indices]
+        tracks = [i for i in playlist['tracks'] + obscured if i not in playlist['tracks'] or i not in obscured]
+        return tracks, obscured
 
+    """
+    Obscures a percentage of songs
+    Iterates and sees how many reccomendations match the missing songs
+    """
+    def test(self, iterations, percent=50): 
+        print("Selecting", iterations, "Playlists...")
+        print("Obscuring", percent, "% of values ")
+
+        accuracies = []
+        for i in tqdm(range(iterations)):
+            playlist = self.getRandomPlaylist()
+
+            keptTracks, obscured = self.obscurePlaylist(playlist, percent)
+            playlistSub = playlist.copy()
+            playlistSub['tracks'] = keptTracks
+
+            predictions = self.predictNeighbour(playlistSub, len(obscured))
+            #print(predictions)
+
+            obscuredTracks = [self.songs.loc[x]['track_name'] for x in obscured]
+            #print(obscuredTracks)
+            
+            overlap = [value for value in predictions if value in obscuredTracks]
+
+            #print(len(overlap))
+
+            accuracy = len(overlap)/len(obscuredTracks)
+            accuracies.append(accuracy)
+            #print("Given a random playlist with ", len(playlist['tracks']), " songs, this test showed an accuracy of ", accuracy)
+        print(sum(accuracies)/len(accuracies))
 
 
 
@@ -135,4 +167,4 @@ if __name__ == "__main__":
     spotify_explorer.buildBaseClassifier()
 
     #Run tests
-    spotify_explorer.test()
+    spotify_explorer.test(150)
