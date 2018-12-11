@@ -12,20 +12,26 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import accuracy_score, r2_score
 
 from models.NNeighClassifier import NNeighClassifier
+from models.BaseClassifier import BaseClassifier
 from util import vis, dataIn
 from util.helpers import playlistToSparseMatrixEntry
 from test.test import TestTracks
 
-class exploreData():
-    def __init__(self, idx, numFiles, parseFiles):
+class SpotifyExplorer:
+    def __init__(self, idx, numFiles, parseFiles, classifier="NNC"):
         self.readData(idx=idx,
             numFiles=numFiles,
             shouldProcess=parseFiles)
-        self.NNC = NNeighClassifier(
-            sparsePlaylists=self.playlistSparse,
-            songs=self.songs,
-            playlists=self.playlists,
-            reTrain=True)
+        if classifier == "NNC":
+            self.NNC = NNeighClassifier(
+                sparsePlaylists=self.playlistSparse,
+                songs=self.songs,
+                playlists=self.playlists,
+                reTrain=True)
+        else: 
+            self.baseClassifier = BaseClassifier(
+                songs=self.songs,
+                playlists=self.playlists)  
         self.predictRandomNeighbour(self.playlists.iloc[10])
 
     def readData(self, idx, numFiles, shouldProcess):
@@ -80,4 +86,4 @@ if __name__ == "__main__":
         parse = True
     else:
         parse = False
-    x = exploreData(idx, numFiles, parse)
+    x = SpotifyExplorer(idx, numFiles, parse)
