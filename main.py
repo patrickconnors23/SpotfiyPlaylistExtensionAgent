@@ -1,4 +1,4 @@
-import json, argparse, os
+import json, argparse, os, random
 
 import pprint as pp
 import numpy as np
@@ -76,7 +76,10 @@ class SpotifyExplorer:
         print(f"Working with {len(self.playlists)} playlists " + \
             f"and {len(self.songs)} songs")
     
-    def predictRandomNeighbour(self, playlist):
+    def getRandomPlaylist(self): 
+        return self.playlists.iloc[random.randint(0,len(self.playlists) - 1)]
+
+    def predictNeighbour(self, playlist):
         return self.classifier.predict(playlist)
         
     #TODO change this later
@@ -88,7 +91,10 @@ class SpotifyExplorer:
         #vis.displayMostCommonKeyWord(data)
 
     def test(self): 
-        print(self.predictRandomNeighbour(self.playlists.iloc[8]))
+        playlist = self.getRandomPlaylist()
+        print("Selected playlist contains ", len(playlist), "songs")
+        print("Obscuring half of them for testing...")
+        self.predictNeighbour(playlist)
 
 
 
@@ -121,7 +127,7 @@ if __name__ == "__main__":
     numFiles: Number of files to load (each with 1000 playlists)
     parse:    Boolean to load in data
     """
-    
+
     spotify_explorer = SpotifyExplorer(idx, numFiles, parse)
 
     #Create our classifiers
