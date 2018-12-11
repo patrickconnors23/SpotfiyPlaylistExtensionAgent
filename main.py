@@ -18,10 +18,8 @@ from util.helpers import playlistToSparseMatrixEntry, getPlaylistTracks
 #from test.test import TestTracks
 
 class SpotifyExplorer:
-    def __init__(self, idx, numFiles, parseFiles, classifier="NNC"):
-        self.readData(idx=idx,
-            numFiles=numFiles,
-            shouldProcess=parseFiles)
+    def __init__(self, numFiles, classifier="NNC"):
+        self.readData(numFiles)
 
         if classifier == "NNC": 
             self.currentClassifier = "NNC"
@@ -54,9 +52,9 @@ class SpotifyExplorer:
             self.currentClassifier = "NNC"
             self.classifier = self.NNC
 
-    def readData(self, idx, numFiles, shouldProcess):
+    def readData(self, numFilesToProcess):
         # don't have to write every time
-        if shouldProcess:
+        if numFilesToProcess > 0:
             # extract number from file
             def sortFile(f):
                 f = f.split('.')[2].split('-')[0]
@@ -64,8 +62,8 @@ class SpotifyExplorer:
             files = os.listdir("data/data")
             files.sort(key=sortFile)
 
-            dataIn.createDFs(idx=idx, 
-                numFiles=numFiles,
+            dataIn.createDFs(idx=0, 
+                numFiles=numFilesToProcess,
                 path="data/data/",
                 files=files)
 
@@ -115,18 +113,14 @@ class SpotifyExplorer:
             playlistSub['tracks'] = keptTracks
 
             predictions = self.predictNeighbour(playlistSub, len(obscured), self.songs)
-            #print(predictions)
 
             obscuredTracks = [self.songs.loc[x]['track_name'] for x in obscured]
-            #print(obscuredTracks)
             
             overlap = [value for value in predictions if value in obscuredTracks]
 
-            #print(len(overlap))
-
             accuracy = len(overlap)/len(obscuredTracks)
             accuracies.append(accuracy)
-            #print("Given a random playlist with ", len(playlist['tracks']), " songs, this test showed an accuracy of ", accuracy)
+
         print("Using model",self.currentClassifier, ", we have an accuracy that averages", sum(accuracies)/len(accuracies), "across", iterations, "iterations")
 
 
@@ -135,32 +129,22 @@ class SpotifyExplorer:
 if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f')
-    parser.add_argument('-n')
     parser.add_argument('--parseData')
     args = parser.parse_args()
-    if args.f:
-        idx = int(args.f)
-    else: 
-        idx = 0
-    if args.n:
-        numFiles = int(args.n)
-    else: 
-        numFiles = 1
     if args.parseData:
-        parse = True
+        numToParse = int(args.parseData)
     else:
-        parse = False
+        numToParse = 0
 
     """
     Builds explorer
-
-    idx:      ????
     numFiles: Number of files to load (each with 1000 playlists)
     parse:    Boolean to load in data
     """
 
-    spotify_explorer = SpotifyExplorer(idx, numFiles, parse, classifier="Base")
+    spotify_explorer = SpotifyExplorer(
+        numToParse, 
+        classifier="Base")
 
     #Create our classifiers
     spotify_explorer.buildNNC()
