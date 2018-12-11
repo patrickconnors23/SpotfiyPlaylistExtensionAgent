@@ -18,22 +18,20 @@ from util.helpers import playlistToSparseMatrixEntry, getPlaylistTracks
 #from test.test import TestTracks
 
 class SpotifyExplorer:
-    def __init__(self, numFiles, classifier="NNC"):
+    def __init__(self, numFiles, retrainNNC=True):
         self.readData(numFiles)
+        self.buildClassifiers(retrainNNC)
 
-        if classifier == "NNC": 
-            self.currentClassifier = "NNC"
-            self.classifier = self.buildNNC()
-        else: 
-            self.currentClassifier = "Base"
-            self.classifier = self.buildBaseClassifier()
+    def buildClassifiers(self, retrainNNC):
+        self.NNC = self.buildNNC(retrainNNC)
+        self.baseClassifier = self.buildBaseClassifier()
 
-    def buildNNC(self): 
+    def buildNNC(self, shouldRetrain): 
         self.NNC = NNeighClassifier(
             sparsePlaylists=self.playlistSparse,
             songs=self.songs,
             playlists=self.playlists,
-            reTrain=True) 
+            reTrain=shouldRetrain) 
         return self.NNC
 
     def buildBaseClassifier(self):
@@ -41,16 +39,6 @@ class SpotifyExplorer:
             songs=self.songs,
             playlists=self.playlists)  
         return self.baseClassifier
-
-    def switchClassifier(self, classifier=None): 
-        if classifier == None: 
-            classifier = "NNC" if classifier == "Base" else "Base"
-        if classifier == "Base": 
-            self.currentClassifier = "Base"
-            self.classifier = self.baseClassifier
-        else: 
-            self.currentClassifier = "NNC"
-            self.classifier = self.NNC
 
     def readData(self, numFilesToProcess):
         # don't have to write every time
@@ -78,8 +66,11 @@ class SpotifyExplorer:
     def getRandomPlaylist(self): 
         return self.playlists.iloc[random.randint(0,len(self.playlists) - 1)]
 
-    def predictNeighbour(self, playlist, numPredictions, songs):
-        return self.classifier.predict(playlist, numPredictions, songs)
+    def predictNeighbour(self, playlist, numPredictions, songs, classifier="NNC"):
+        if classifier == "NNC":
+            return self.NNC.predict(playlist, numPredictions, songs)
+        else:
+            return self.baseClassifier.predict(playlist, numPredictions, songs)
         
     #TODO change this later
     def displayData(self):
@@ -100,7 +91,7 @@ class SpotifyExplorer:
     Obscures a percentage of songs
     Iterates and sees how many reccomendations match the missing songs
     """
-    def test(self, iterations, percent=50): 
+    def test(self, iterations, percent=50, classifier="NNC"): 
         print("Selecting", iterations, "Playlists...")
         print("Obscuring", percent, "% of values ")
 
@@ -112,7 +103,10 @@ class SpotifyExplorer:
             playlistSub = playlist.copy()
             playlistSub['tracks'] = keptTracks
 
-            predictions = self.predictNeighbour(playlistSub, len(obscured), self.songs)
+            predictions = self.predictNeighbour(playlistSub, 
+                len(obscured), 
+                self.songs,
+                classifier=classifier)
 
             obscuredTracks = [self.songs.loc[x]['track_name'] for x in obscured]
             
@@ -121,7 +115,7 @@ class SpotifyExplorer:
             accuracy = len(overlap)/len(obscuredTracks)
             accuracies.append(accuracy)
 
-        print("Using model",self.currentClassifier, ", we have an accuracy that averages", sum(accuracies)/len(accuracies), "across", iterations, "iterations")
+        print("Using model", classifier, ", we have an accuracy that averages", round(sum(accuracies)/len(accuracies), 4), "across", iterations, "iterations")
 
 
 
@@ -142,18 +136,10 @@ if __name__ == "__main__":
     parse:    Boolean to load in data
     """
 
-    spotify_explorer = SpotifyExplorer(
-        numToParse, 
-        classifier="Base")
-
-    #Create our classifiers
-    spotify_explorer.buildNNC()
-    spotify_explorer.buildBaseClassifier()
+    spotify_explorer = SpotifyExplorer(numToParse)
 
     #Run tests on Base
     spotify_explorer.test(30)
 
-    spotify_explorer.switchClassifier(classifier="NNC")
-
     #Run teset on our model
-    spotify_explorer.test(30)
+    spotify_explorer.test(30, classifier="Base")
