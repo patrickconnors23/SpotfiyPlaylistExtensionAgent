@@ -14,6 +14,7 @@ from util.helpers import playlistToSparseMatrixEntry, getPlaylistTracks
 class NNeighClassifier():
     def __init__(self, playlists, sparsePlaylists, songs, reTrain=False, name="NNClassifier.pkl"):
         self.pathName = name
+        self.name = "NNC"
         self.playlistData = sparsePlaylists
         self.playlists = playlists 
         self.songs = songs
@@ -48,7 +49,6 @@ class NNeighClassifier():
                 songs[track_name] += (1/(i+1))
         scores = heapq.nlargest(numPredictions, songs, key=songs.get) 
         return scores
-
     
     def predict(self, X, numPredictions, songs):
         predictions = []
@@ -61,7 +61,3 @@ class NNeighClassifier():
     
     def saveModel(self):
         pickle.dump(self.model, open(f"lib/{self.pathName}", "wb"))
-    
-    def tagPlaylistClusters(self, data):
-        data["clusterNum"] = data.apply(lambda row: self.model.predict(row), axis=1)
-        return data
