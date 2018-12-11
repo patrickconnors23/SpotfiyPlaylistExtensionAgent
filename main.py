@@ -80,8 +80,8 @@ class SpotifyExplorer:
     def getRandomPlaylist(self): 
         return self.playlists.iloc[random.randint(0,len(self.playlists) - 1)]
 
-    def predictNeighbour(self, playlist, numPredictions):
-        return self.classifier.predict(playlist, numPredictions)
+    def predictNeighbour(self, playlist, numPredictions, songs):
+        return self.classifier.predict(playlist, numPredictions, songs)
         
     #TODO change this later
     def displayData(self):
@@ -114,7 +114,7 @@ class SpotifyExplorer:
             playlistSub = playlist.copy()
             playlistSub['tracks'] = keptTracks
 
-            predictions = self.predictNeighbour(playlistSub, len(obscured))
+            predictions = self.predictNeighbour(playlistSub, len(obscured), self.songs)
             #print(predictions)
 
             obscuredTracks = [self.songs.loc[x]['track_name'] for x in obscured]
@@ -167,9 +167,9 @@ if __name__ == "__main__":
     spotify_explorer.buildBaseClassifier()
 
     #Run tests on Base
-    spotify_explorer.test(15)
+    spotify_explorer.test(30)
 
     spotify_explorer.switchClassifier(classifier="NNC")
 
     #Run teset on our model
-    spotify_explorer.test(15)
+    spotify_explorer.test(30)
