@@ -11,5 +11,5 @@ import matplotlib.pyplot as plt
 from util.helpers import playlistToSparseMatrixEntry, getPlaylistTracks
 
 class BaseClassifier:
-    def __init__(self, playlists, sparsePlaylists, songs, reTrain=False, name="NNClassifier.pkl"):
+    def __init__(self, playlists, songs, reTrain=False, name="BaseClassifier.pkl"):
         pass

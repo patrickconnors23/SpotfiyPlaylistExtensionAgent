@@ -18,7 +18,7 @@ from util.helpers import playlistToSparseMatrixEntry
 
 
 
-class TestTracks():
+class TestTracks:
     def __init__(self):
         """self.readData(idx=idx,
             numFiles=numFiles,

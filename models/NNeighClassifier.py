@@ -7,7 +7,8 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.metrics import accuracy_score, r2_score
 import matplotlib
 import matplotlib.pyplot as plt
-
+from collections import defaultdict
+import heapq
 from util.helpers import playlistToSparseMatrixEntry, getPlaylistTracks
 
 class NNeighClassifier():

@@ -3,7 +3,6 @@ import json, argparse, os
 import pprint as pp
 import numpy as np
 import pandas as pd
-
 from sklearn import metrics, datasets
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression, LinearRegression
@@ -15,7 +14,7 @@ from models.NNeighClassifier import NNeighClassifier
 from models.BaseClassifier import BaseClassifier
 from util import vis, dataIn
 from util.helpers import playlistToSparseMatrixEntry
-from test.test import TestTracks
+#from test.test import TestTracks
 
 class SpotifyExplorer:
     def __init__(self, idx, numFiles, parseFiles, classifier="NNC"):
