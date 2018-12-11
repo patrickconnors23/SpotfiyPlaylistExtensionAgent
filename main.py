@@ -1,9 +1,9 @@
-import json, argparse, os
+import json, argparse, os, random
 
 import pprint as pp
 import numpy as np
 import pandas as pd
-
+from tqdm import tqdm
 from sklearn import metrics, datasets
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression, LinearRegression
@@ -12,21 +12,47 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import accuracy_score, r2_score
 
 from models.NNeighClassifier import NNeighClassifier
+from models.BaseClassifier import BaseClassifier
 from util import vis, dataIn
-from util.helpers import playlistToSparseMatrixEntry
-from test.test import TestTracks
+from util.helpers import playlistToSparseMatrixEntry, getPlaylistTracks
+#from test.test import TestTracks
 
-class exploreData():
-    def __init__(self, idx, numFiles, parseFiles):
+class SpotifyExplorer:
+    def __init__(self, idx, numFiles, parseFiles, classifier="NNC"):
         self.readData(idx=idx,
             numFiles=numFiles,
             shouldProcess=parseFiles)
+
+        if classifier == "NNC": 
+            self.currentClassifier = "NNC"
+            self.classifier = self.buildNNC()
+        else: 
+            self.currentClassifier = "Base"
+            self.classifier = self.buildBaseClassifier()
+
+    def buildNNC(self): 
         self.NNC = NNeighClassifier(
             sparsePlaylists=self.playlistSparse,
             songs=self.songs,
             playlists=self.playlists,
-            reTrain=True)
-        self.predictRandomNeighbour(self.playlists.iloc[10])
+            reTrain=True) 
+        return self.NNC
+
+    def buildBaseClassifier(self):
+        self.baseClassifier = BaseClassifier(
+            songs=self.songs,
+            playlists=self.playlists)  
+        return self.baseClassifier
+
+    def switchClassifier(self, classifier=None): 
+        if classifier == None: 
+            classifier = "NNC" if classifier == "Base" else "Base"
+        if classifier == "Base": 
+            self.currentClassifier = "Base"
+            self.classifier = self.baseClassifier
+        else: 
+            self.currentClassifier = "NNC"
+            self.classifier = self.NNC
 
     def readData(self, idx, numFiles, shouldProcess):
         # don't have to write every time
@@ -51,15 +77,60 @@ class exploreData():
         print(f"Working with {len(self.playlists)} playlists " + \
             f"and {len(self.songs)} songs")
     
-    def predictRandomNeighbour(self, playlist):
-        self.NNC.predict(playlist)
+    def getRandomPlaylist(self): 
+        return self.playlists.iloc[random.randint(0,len(self.playlists) - 1)]
+
+    def predictNeighbour(self, playlist, numPredictions):
+        return self.classifier.predict(playlist, numPredictions)
         
     #TODO change this later
     def displayData(self):
-        data = self.data
-        vis.displayPlaylistLengthDistribution(data)
-        vis.displayPopularArtists(data)
-        vis.displayMostCommonKeyWord(data)
+        pass
+        #data = self.data
+        #vis.displayPlaylistLengthDistribution(data)
+        #vis.displayPopularArtists(data)
+        #vis.displayMostCommonKeyWord(data)
+
+    def obscurePlaylist(self, playlist, obscurity): 
+        k = len(playlist['tracks']) * obscurity // 100
+        indices = random.sample(range(len(playlist['tracks'])), k)
+        obscured = [playlist['tracks'][i] for i in indices]
+        tracks = [i for i in playlist['tracks'] + obscured if i not in playlist['tracks'] or i not in obscured]
+        return tracks, obscured
+
+    """
+    Obscures a percentage of songs
+    Iterates and sees how many reccomendations match the missing songs
+    """
+    def test(self, iterations, percent=50): 
+        print("Selecting", iterations, "Playlists...")
+        print("Obscuring", percent, "% of values ")
+
+        accuracies = []
+        for i in tqdm(range(iterations)):
+            playlist = self.getRandomPlaylist()
+
+            keptTracks, obscured = self.obscurePlaylist(playlist, percent)
+            playlistSub = playlist.copy()
+            playlistSub['tracks'] = keptTracks
+
+            predictions = self.predictNeighbour(playlistSub, len(obscured))
+            #print(predictions)
+
+            obscuredTracks = [self.songs.loc[x]['track_name'] for x in obscured]
+            #print(obscuredTracks)
+            
+            overlap = [value for value in predictions if value in obscuredTracks]
+
+            #print(len(overlap))
+
+            accuracy = len(overlap)/len(obscuredTracks)
+            accuracies.append(accuracy)
+            #print("Given a random playlist with ", len(playlist['tracks']), " songs, this test showed an accuracy of ", accuracy)
+        print(sum(accuracies)/len(accuracies))
+
+
+
 
 if __name__ == "__main__":
     # Parse command line arguments
@@ -80,4 +151,20 @@ if __name__ == "__main__":
         parse = True
     else:
         parse = False
-    x = exploreData(idx, numFiles, parse)
+
+    """
+    Builds explorer
+
+    idx:      ????
+    numFiles: Number of files to load (each with 1000 playlists)
+    parse:    Boolean to load in data
+    """
+
+    spotify_explorer = SpotifyExplorer(idx, numFiles, parse)
+
+    #Create our classifiers
+    spotify_explorer.buildNNC()
+    spotify_explorer.buildBaseClassifier()
+
+    #Run tests
+    spotify_explorer.test(150)

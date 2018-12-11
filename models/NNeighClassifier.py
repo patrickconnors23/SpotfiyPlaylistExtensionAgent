@@ -7,7 +7,8 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.metrics import accuracy_score, r2_score
 import matplotlib
 import matplotlib.pyplot as plt
-
+from collections import defaultdict
+import heapq
 from util.helpers import playlistToSparseMatrixEntry, getPlaylistTracks
 
 class NNeighClassifier():
@@ -39,23 +40,23 @@ class NNeighClassifier():
     def getPlaylistsFromNeighbors(self, playlists):
         return [self.playlists.loc[x] for x in playlists]
     
-    def getPredictionsFromTracks(self, tracks):
+    def getPredictionsFromTracks(self, tracks,numPredictions):
         songs = defaultdict(int)
         for i, playlist in enumerate(tracks): 
             for song in playlist:
                 track_name = song['track_name']
                 songs[track_name] += (1/(i+1))
-        scores = heapq.nlargest(7, songs, key=songs.get) 
+        scores = heapq.nlargest(numPredictions, songs, key=songs.get) 
         return scores
 
     
-    def predict(self, X):
+    def predict(self, X, numPredictions):
         predictions = []
         sparseX = playlistToSparseMatrixEntry(X, self.songs)
         neighbors = self.getNeighbors(sparseX) # PlaylistIDs
         playlists = self.getPlaylistsFromNeighbors(neighbors)
         tracks = [getPlaylistTracks(x, self.songs) for x in playlists]
-        predictions = self.getPredictionsFromTracks(tracks)
+        predictions = self.getPredictionsFromTracks(tracks, numPredictions)
         return predictions
     
     def saveModel(self):
