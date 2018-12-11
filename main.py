@@ -18,15 +18,35 @@ from util.helpers import playlistToSparseMatrixEntry, getPlaylistTracks
 #from test.test import TestTracks
 
 class SpotifyExplorer:
+    """
+    Args:
+        numFiles (int): CLI variable that determines how many MPD files to read
+        retrainNNC (bool): determines whether to retrain NNC or read from file
+
+    Attributes:
+        NNC (NNeighClassifier): NNeighbor Classifier used for predictions
+        baseClassifier (BaseClassifier): Baseline classifier for comparison
+        playlists (DataFrame): contains all playlists read into memory
+        songs (DataFrame): all songs read into memory
+        playlistSparse (scipy.CSR matrix) playlists formatted for predictions
+
+    """
     def __init__(self, numFiles, retrainNNC=True):
         self.readData(numFiles)
         self.buildClassifiers(retrainNNC)
 
     def buildClassifiers(self, retrainNNC):
+        """
+        Init classifiers and set initial classifier as main
+        """
         self.NNC = self.buildNNC(retrainNNC)
         self.baseClassifier = self.buildBaseClassifier()
+        self.classifier = self.NNC
 
     def buildNNC(self, shouldRetrain): 
+        """
+        Init NNC classifier
+        """
         self.NNC = NNeighClassifier(
             sparsePlaylists=self.playlistSparse,
             songs=self.songs,
@@ -35,12 +55,28 @@ class SpotifyExplorer:
         return self.NNC
 
     def buildBaseClassifier(self):
+        """
+        Init base classifier
+        """
         self.baseClassifier = BaseClassifier(
             songs=self.songs,
             playlists=self.playlists)  
         return self.baseClassifier
+    
+    def setClassifier(self, classifier="NNC"):
+        """
+        Select classifier to set as main classifier
+        """
+        if classifier == "NNC":
+            self.classifier = self.NNC
+        elif classifier == "Base":
+            self.classifier = self.baseClassifier
 
     def readData(self, numFilesToProcess):
+        """
+        Read song and playlist data
+        Either read from MPD data or pickled dataframe
+        """
         # don't have to write every time
         if numFilesToProcess > 0:
             # extract number from file
@@ -66,34 +102,29 @@ class SpotifyExplorer:
     def getRandomPlaylist(self): 
         return self.playlists.iloc[random.randint(0,len(self.playlists) - 1)]
 
-    def predictNeighbour(self, playlist, numPredictions, songs, classifier="NNC"):
-        if classifier == "NNC":
-            return self.NNC.predict(playlist, numPredictions, songs)
-        else:
-            return self.baseClassifier.predict(playlist, numPredictions, songs)
+    def predictNeighbour(self, playlist, numPredictions, songs):
+        """
+        Use currently selected predictor to predict neighborings songs
+        """
+        return self.classifier.predict(playlist, numPredictions, songs)
         
-    #TODO change this later
-    def displayData(self):
-        pass
-        #data = self.data
-        #vis.displayPlaylistLengthDistribution(data)
-        #vis.displayPopularArtists(data)
-        #vis.displayMostCommonKeyWord(data)
-
     def obscurePlaylist(self, playlist, obscurity): 
+        """
+        Obscure a portion of a playlist's songs for testing
+        """
         k = len(playlist['tracks']) * obscurity // 100
         indices = random.sample(range(len(playlist['tracks'])), k)
         obscured = [playlist['tracks'][i] for i in indices]
         tracks = [i for i in playlist['tracks'] + obscured if i not in playlist['tracks'] or i not in obscured]
         return tracks, obscured
 
-    """
-    Obscures a percentage of songs
-    Iterates and sees how many reccomendations match the missing songs
-    """
-    def test(self, iterations, percent=50, classifier="NNC"): 
-        print("Selecting", iterations, "Playlists...")
-        print("Obscuring", percent, "% of values ")
+    def test(self, iterations, percent=50): 
+        """
+        Obscures a percentage of songs
+        Iterates and sees how many reccomendations match the missing songs
+        """
+        print()
+        print(f"Selecting {iterations} playlists to test and obscuring {percent}% of songs")
 
         accuracies = []
         for _ in tqdm(range(iterations)):
@@ -105,8 +136,7 @@ class SpotifyExplorer:
 
             predictions = self.predictNeighbour(playlistSub, 
                 len(obscured), 
-                self.songs,
-                classifier=classifier)
+                self.songs)
 
             obscuredTracks = [self.songs.loc[x]['track_name'] for x in obscured]
             
@@ -115,10 +145,7 @@ class SpotifyExplorer:
             accuracy = len(overlap)/len(obscuredTracks)
             accuracies.append(accuracy)
 
-        print("Using model", classifier, ", we have an accuracy that averages", round(sum(accuracies)/len(accuracies), 4), "across", iterations, "iterations")
-
-
-
+        print(f"Using {self.classifier.name}, we predictd {round(sum(accuracies)/len(accuracies), 4) * 100}% of obscured songs")
 
 if __name__ == "__main__":
     # Parse command line arguments
@@ -136,10 +163,12 @@ if __name__ == "__main__":
     parse:    Boolean to load in data
     """
 
+    # Init class
     spotify_explorer = SpotifyExplorer(numToParse)
 
-    #Run tests on Base
+    #Run tests on NNC
     spotify_explorer.test(30)
-
-    #Run teset on our model
-    spotify_explorer.test(30, classifier="Base")
+    
+    # Run tests on base
+    spotify_explorer.setClassifier("Base")
+    spotify_explorer.test(30)

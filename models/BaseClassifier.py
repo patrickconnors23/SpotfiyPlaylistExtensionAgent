@@ -15,6 +15,7 @@ from util.helpers import playlistToSparseMatrixEntry, getPlaylistTracks
 class BaseClassifier:
     def __init__(self, playlists, songs, reTrain=False, name="BaseClassifier.pkl"):
         self.pathName = name
+        self.name = "Base Classifier"
         self.playlists = playlists 
         self.songs = songs
         self.popularity = self.getPopularity()
@@ -25,6 +26,7 @@ class BaseClassifier:
             for track in playlist:
                 popularity[track] += 1
         return popularity
+        
     def predict(self, X, numPredictions, songs):
         scores = heapq.nlargest(numPredictions, self.popularity, key=self.popularity.get) 
         scores = [songs.loc[x]['track_name'] for x in scores]

@@ -15,21 +15,6 @@ from models.NNeighClassifier import NNeighClassifier
 from util import vis, dataIn
 from util.helpers import playlistToSparseMatrixEntry
 
-
-
-
 class TestTracks:
     def __init__(self):
-        """self.readData(idx=idx,
-            numFiles=numFiles,
-            shouldProcess=parseFiles)"""
         pass
-    
-        """def testPlaylist(self):
-            self.NNC = NNeighClassifier(
-                sparsePlaylists=self.playlistSparse,
-                songs=self.songs,
-                playlists=self.playlists,
-                reTrain=True)
-
-            self.predictRandomNeighbour(self.playlists.iloc[10])"""
