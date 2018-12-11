@@ -40,7 +40,7 @@ class NNeighClassifier():
     def getPlaylistsFromNeighbors(self, playlists):
         return [self.playlists.loc[x] for x in playlists]
     
-    def getPredictionsFromTracks(self, tracks,numPredictions):
+    def getPredictionsFromTracks(self, tracks, numPredictions):
         songs = defaultdict(int)
         for i, playlist in enumerate(tracks): 
             for song in playlist:
@@ -50,7 +50,7 @@ class NNeighClassifier():
         return scores
 
     
-    def predict(self, X, numPredictions):
+    def predict(self, X, numPredictions, songs):
         predictions = []
         sparseX = playlistToSparseMatrixEntry(X, self.songs)
         neighbors = self.getNeighbors(sparseX) # PlaylistIDs
