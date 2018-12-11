@@ -96,7 +96,7 @@ class SpotifyExplorer:
         print("Obscuring", percent, "% of values ")
 
         accuracies = []
-        for i in tqdm(range(iterations)):
+        for _ in tqdm(range(iterations)):
             playlist = self.getRandomPlaylist()
 
             keptTracks, obscured = self.obscurePlaylist(playlist, percent)
