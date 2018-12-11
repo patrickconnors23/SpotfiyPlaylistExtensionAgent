@@ -18,24 +18,20 @@ from util.helpers import playlistToSparseMatrixEntry, getPlaylistTracks
 #from test.test import TestTracks
 
 class SpotifyExplorer:
-    def __init__(self, idx, numFiles, parseFiles, classifier="NNC"):
-        self.readData(idx=idx,
-            numFiles=numFiles,
-            shouldProcess=parseFiles)
+    def __init__(self, numFiles, retrainNNC=True):
+        self.readData(numFiles)
+        self.buildClassifiers(retrainNNC)
 
-        if classifier == "NNC": 
-            self.currentClassifier = "NNC"
-            self.classifier = self.buildNNC()
-        else: 
-            self.currentClassifier = "Base"
-            self.classifier = self.buildBaseClassifier()
+    def buildClassifiers(self, retrainNNC):
+        self.NNC = self.buildNNC(retrainNNC)
+        self.baseClassifier = self.buildBaseClassifier()
 
-    def buildNNC(self): 
+    def buildNNC(self, shouldRetrain): 
         self.NNC = NNeighClassifier(
             sparsePlaylists=self.playlistSparse,
             songs=self.songs,
             playlists=self.playlists,
-            reTrain=True) 
+            reTrain=shouldRetrain) 
         return self.NNC
 
     def buildBaseClassifier(self):
@@ -44,19 +40,9 @@ class SpotifyExplorer:
             playlists=self.playlists)  
         return self.baseClassifier
 
-    def switchClassifier(self, classifier=None): 
-        if classifier == None: 
-            classifier = "NNC" if classifier == "Base" else "Base"
-        if classifier == "Base": 
-            self.currentClassifier = "Base"
-            self.classifier = self.baseClassifier
-        else: 
-            self.currentClassifier = "NNC"
-            self.classifier = self.NNC
-
-    def readData(self, idx, numFiles, shouldProcess):
+    def readData(self, numFilesToProcess):
         # don't have to write every time
-        if shouldProcess:
+        if numFilesToProcess > 0:
             # extract number from file
             def sortFile(f):
                 f = f.split('.')[2].split('-')[0]
@@ -64,8 +50,8 @@ class SpotifyExplorer:
             files = os.listdir("data/data")
             files.sort(key=sortFile)
 
-            dataIn.createDFs(idx=idx, 
-                numFiles=numFiles,
+            dataIn.createDFs(idx=0, 
+                numFiles=numFilesToProcess,
                 path="data/data/",
                 files=files)
 
@@ -80,8 +66,11 @@ class SpotifyExplorer:
     def getRandomPlaylist(self): 
         return self.playlists.iloc[random.randint(0,len(self.playlists) - 1)]
 
-    def predictNeighbour(self, playlist, numPredictions, songs):
-        return self.classifier.predict(playlist, numPredictions, songs)
+    def predictNeighbour(self, playlist, numPredictions, songs, classifier="NNC"):
+        if classifier == "NNC":
+            return self.NNC.predict(playlist, numPredictions, songs)
+        else:
+            return self.baseClassifier.predict(playlist, numPredictions, songs)
         
     #TODO change this later
     def displayData(self):
@@ -102,7 +91,7 @@ class SpotifyExplorer:
     Obscures a percentage of songs
     Iterates and sees how many reccomendations match the missing songs
     """
-    def test(self, iterations, percent=70): 
+    def test(self, iterations, percent=50, classifier="NNC"): 
         print("Selecting", iterations, "Playlists...")
         print("Obscuring", percent, "% of values ")
 
@@ -114,20 +103,19 @@ class SpotifyExplorer:
             playlistSub = playlist.copy()
             playlistSub['tracks'] = keptTracks
 
-            predictions = self.predictNeighbour(playlistSub, len(obscured), self.songs)
-            #print(predictions)
-            #print(len(predictions))
-            obscuredTracks = [self.songs.loc[x]['track_name'] for x in obscured]
-            #print(obscuredTracks)
-            #print(len(obscuredTracks))
-            overlap = [value for value in predictions if value in obscuredTracks]
+            predictions = self.predictNeighbour(playlistSub, 
+                len(obscured), 
+                self.songs,
+                classifier=classifier)
 
-            #print(len(overlap))
+            obscuredTracks = [self.songs.loc[x]['track_name'] for x in obscured]
+            
+            overlap = [value for value in predictions if value in obscuredTracks]
 
             accuracy = len(overlap)/len(obscuredTracks)
             accuracies.append(accuracy)
-            #print("Given a random playlist with ", len(playlist['tracks']), " songs, this test showed an accuracy of ", accuracy)
-        print("Using model",self.currentClassifier, ", we have an accuracy that averages", sum(accuracies)/len(accuracies), "across", iterations, "iterations")
+
+        print("Using model", classifier, ", we have an accuracy that averages", round(sum(accuracies)/len(accuracies), 4), "across", iterations, "iterations")
 
 
 
@@ -135,41 +123,23 @@ class SpotifyExplorer:
 if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f')
-    parser.add_argument('-n')
     parser.add_argument('--parseData')
     args = parser.parse_args()
-    if args.f:
-        idx = int(args.f)
-    else: 
-        idx = 0
-    if args.n:
-        numFiles = int(args.n)
-    else: 
-        numFiles = 1
     if args.parseData:
-        parse = True
+        numToParse = int(args.parseData)
     else:
-        parse = False
+        numToParse = 0
 
     """
     Builds explorer
-
-    idx:      ????
     numFiles: Number of files to load (each with 1000 playlists)
     parse:    Boolean to load in data
     """
 
-    spotify_explorer = SpotifyExplorer(idx, numFiles, parse, classifier="Base")
-
-    #Create our classifiers
-    spotify_explorer.buildNNC()
-    spotify_explorer.buildBaseClassifier()
+    spotify_explorer = SpotifyExplorer(numToParse)
 
     #Run tests on Base
     spotify_explorer.test(30)
 
-    spotify_explorer.switchClassifier(classifier="NNC")
-
     #Run teset on our model
-    spotify_explorer.test(30)
+    spotify_explorer.test(30, classifier="Base")
