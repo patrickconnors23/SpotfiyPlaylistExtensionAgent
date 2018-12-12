@@ -14,8 +14,7 @@ from sklearn.metrics import accuracy_score, r2_score
 from models.NNeighClassifier import NNeighClassifier
 from models.BaseClassifier import BaseClassifier
 from util import vis, dataIn
-from util.helpers import playlistToSparseMatrixEntry, getPlaylistTracks, getTrackandArtist
-#from test.test import TestTracks
+from util.helpers import playlistToSparseMatrixEntry, getPlaylistTracks, getTrackandArtist, obscurePlaylist
 
 class SpotifyExplorer:
     """
@@ -101,11 +100,11 @@ class SpotifyExplorer:
     def getRandomPlaylist(self): 
         return self.playlists.iloc[random.randint(0,len(self.playlists) - 1)]
 
-    def predictNeighbour(self, playlist, numPredictions, songs):
+    def predictNeighbour(self, playlist, numPredictions, songs, k=20):
         """
         Use currently selected predictor to predict neighborings songs
         """
-        return self.classifier.predict(playlist, numPredictions, songs)
+        return self.classifier.predict(playlist, numPredictions, songs, k)
         
     def obscurePlaylist(self, playlist, obscurity): 
         """
@@ -117,46 +116,64 @@ class SpotifyExplorer:
         tracks = [i for i in playlist['tracks'] + obscured if i not in playlist['tracks'] or i not in obscured]
         return tracks, obscured
 
-    def evalAccuracy(self, numPlaylists, percentToObscure=50): 
+    def evalAccuracy(self, numPlaylists, percentToObscure=0.5): 
         """
         Obscures a percentage of songs
         Iterates and sees how many reccomendations match the missing songs
         """
         print()
-        print(f"Selecting {numPlaylists} playlists to test and obscuring {percentToObscure}% of songs")
+        print(f"Selecting {numPlaylists} playlists to test and obscuring {int(percentToObscure * 100)}% of songs")
 
-        def getAcc():
+        def getAcc(pToObscure, k):
             playlist = self.getRandomPlaylist()
 
-            keptTracks, obscured = self.obscurePlaylist(playlist, percentToObscure)
+            keptTracks, obscured = obscurePlaylist(playlist, pToObscure)
             playlistSub = playlist.copy()
+            obscured = set(obscured)
             playlistSub['tracks'] = keptTracks
 
             predictions = self.predictNeighbour(playlistSub, 
-                len(obscured), 
-                self.songs)
+                len(obscured) * 10, 
+                self.songs,
+                k)
 
-            # obscuredTracks = [self.songs.loc[x]['track_name'] for x in obscured]
-            
             overlap = [value for value in predictions if value in obscured]
 
             return len(overlap)/len(obscured)
         
-        accuracies = [getAcc() for _ in tqdm(range(numPlaylists))]
-        avgAcc = round(sum(accuracies) / len(accuracies), 4) * 100
-
-        print(f"Using {self.classifier.name}, we predicted {avgAcc}% of obscured songs")
+        for i in tqdm(range(25, 100)):
+            accuracies = [getAcc(percentToObscure, i) for _ in tqdm(range(numPlaylists))]
+            avgAcc = round(sum(accuracies) / len(accuracies), 4) * 100
+            print(f"Num Neighbors: {i} and acc: {avgAcc}")
+        # print(f"Using {self.classifier.name}, we predicted {avgAcc}% of obscured songs")
     
     def displayRandomPrediction(self):
         playlist = self.getRandomPlaylist()
+        while len(playlist["tracks"]) < 10:
+            playlist = self.getRandomPlaylist()
+
         predictions = self.predictNeighbour(playlist=playlist,
             numPredictions=5,
             songs=self.songs)
+
+
         playlistName = playlist["name"]
         playlist = [getTrackandArtist(trackURI, self.songs) for trackURI in playlist["tracks"]]
         predictions = [getTrackandArtist(trackURI, self.songs) for trackURI in predictions]
         pp.pprint(playlist)
         pp.pprint(predictions)
+        return {
+            "name": playlistName,
+            "playlist": playlist,
+            "predictions": predictions
+        }
+    
+    def createRandomPredictionsDF(self, numInstances):
+        print(f"Generating {numInstances} data points")
+        data = [self.displayRandomPrediction() for _ in tqdm(range(numInstances))]
+        df = pd.DataFrame(data)
+        df.to_csv("lukesData.csv")
+        
 
 if __name__ == "__main__":
     # Parse command line arguments
@@ -178,9 +195,9 @@ if __name__ == "__main__":
     spotify_explorer = SpotifyExplorer(numToParse)
 
     #Run tests on NNC
-    # spotify_explorer.evalAccuracy(30)
+    spotify_explorer.evalAccuracy(200)
     
-    # Run tests on base
+    # # # Run tests on base
     # spotify_explorer.setClassifier("Base")
     # spotify_explorer.evalAccuracy(30)
-    spotify_explorer.displayRandomPrediction()
+    # spotify_explorer.createRandomPredictionsDF(1)

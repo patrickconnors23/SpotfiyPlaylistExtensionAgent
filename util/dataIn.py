@@ -21,7 +21,7 @@ def processPlaylistForClustering(playlists, tracks):
     
     playlistIDs = list(playlists["pid"])
     
-    print("Create sparese matrix mapping playlists to tracks")
+    print("Create sparse matrix mapping playlists to tracks")
     playlistSongSparse = dok_matrix((len(playlistIDs), len(trackIDs)), dtype=np.float32)
 
     for i in tqdm(range(len(playlistIDs))):
