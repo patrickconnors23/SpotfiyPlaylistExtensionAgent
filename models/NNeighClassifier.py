@@ -26,7 +26,7 @@ class NNeighClassifier():
         libContents = os.listdir("lib")
         if self.pathName not in libContents or reTrain:
             self.model = NearestNeighbors(
-                n_neighbors=22,
+                n_neighbors=60,
                 metric="cosine")
             self.trainModel(self.playlistData)
         else:
@@ -62,8 +62,9 @@ class NNeighClassifier():
                     songs[track_uri] += (1/(i+1))
         scores = heapq.nlargest(numPredictions, songs, key=songs.get) 
         return scores
+        # return list(predictedSet)
     
-    def predict(self, X, numPredictions, songs, numNeighbours=6):
+    def predict(self, X, numPredictions, songs, numNeighbours=60):
         """
         """
         pid, pTracks = X["pid"], X["tracks"]
