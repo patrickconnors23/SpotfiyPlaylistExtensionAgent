@@ -1,3 +1,4 @@
+import random
 from scipy.sparse import dok_matrix
 
 def playlistToSparseMatrixEntry(playlist, songs):
@@ -17,3 +18,14 @@ def getPlaylistTracks(playlist, songs):
 def getTrackandArtist(trackURI, songs):
     song = songs.loc[trackURI]
     return (song["track_name"], song["artist_name"])
+
+
+def obscurePlaylist(playlist, percentToObscure): 
+    """
+    Obscure a portion of a playlist's songs for testing
+    """
+    k = int(len(playlist['tracks']) * percentToObscure)
+    indices = random.sample(range(len(playlist['tracks'])), k)
+    obscured = [playlist['tracks'][i] for i in indices]
+    tracks = [i for i in playlist['tracks'] + obscured if i not in playlist['tracks'] or i not in obscured]
+    return tracks, obscured

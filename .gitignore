@@ -7,3 +7,5 @@ figs/
 */__pycache__/*
 
 lib/*
+
+*.csv

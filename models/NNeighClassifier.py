@@ -21,48 +21,60 @@ class NNeighClassifier():
         self.initModel(reTrain)
     
     def initModel(self, reTrain):
+        """
+        """
         libContents = os.listdir("lib")
         if self.pathName not in libContents or reTrain:
             self.model = NearestNeighbors(
-                n_neighbors=6,
+                n_neighbors=22,
                 metric="cosine")
             self.trainModel(self.playlistData)
         else:
             self.model = pickle.load(open(f"lib/{self.pathName}", "rb"))
     
     def trainModel(self, data):
+        """
+        """
         print(f"Training Nearest Neighbors classifier")
         self.model.fit(data)
         self.saveModel()
     
-    def getNeighbors(self, X):
-        return self.model.kneighbors(X=X, return_distance=False)[0]
+    def getNeighbors(self, X, k):
+        """
+        """
+        return self.model.kneighbors(X=X, return_distance=False, n_neighbors=k)[0]
     
-    def getPlaylistsFromNeighbors(self, neighbors, pid):
-        neighbors = list(filter(lambda x: x != pid, neighbors))
-        return [self.playlists.loc[x] for x in playlists]
+    def getPlaylistsFromNeighbors(self, neighbours, pid):
+        """
+        """
+        neighbours = list(filter(lambda x: x != pid, neighbours))
+        return [self.playlists.loc[x] for x in neighbours]
     
-    def getPredictionsFromTracks(self, tracks, numPredictions, playlistTracks):
-        playlistTracks = set(playlistTracks)
+    def getPredictionsFromTracks(self, tracks, numPredictions, pTracks):
+        """
+        """
+        pTracks = set(pTracks)
         songs = defaultdict(int)
         for i, playlist in enumerate(tracks): 
             for song in playlist:
                 track_uri = song['track_uri'].split(":")[2]
-                if track_uri not in playlistTracks:
+                if track_uri not in pTracks:
                     songs[track_uri] += (1/(i+1))
         scores = heapq.nlargest(numPredictions, songs, key=songs.get) 
         return scores
     
-    def predict(self, X, numPredictions, songs):
-        pid, playlistTracks = X["pid"], X["tracks"]
+    def predict(self, X, numPredictions, songs, numNeighbours=6):
+        """
+        """
+        pid, pTracks = X["pid"], X["tracks"]
         sparseX = playlistToSparseMatrixEntry(X, self.songs)
-        neighbors = self.getNeighbors(sparseX) # PlaylistIDs
+        neighbors = self.getNeighbors(sparseX, numNeighbours) # PlaylistIDs
         playlists = self.getPlaylistsFromNeighbors(neighbors, pid)
         tracks = [getPlaylistTracks(x, self.songs) for x in playlists]
-        predictions = self.getPredictionsFromTracks(tracks, 
-            numPredictions, 
-            playlistTracks)
+        predictions = self.getPredictionsFromTracks(tracks, numPredictions, pTracks)
         return predictions
     
     def saveModel(self):
+        """
+        """
         pickle.dump(self.model, open(f"lib/{self.pathName}", "wb"))
