@@ -1,4 +1,4 @@
-# 109FinalProject
+# SpotfiyPlaylistExtensionAgent
 
 Follow the below instructions to replicate our results.
 
